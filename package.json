@@ -1,0 +1,33 @@
+{
+  "name": "correl8",
+  "version": "0.0.1",
+  "description": "Test",
+  "main": "app.js",
+  "dependencies": {
+    "elasticsearch": "^8.2.0",
+    "express": "^4.10.6",
+    "redis": "^0.12.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "start": "node --harmony server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Samuel Rinnetmäki",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:correl8/me.git"
+  },
+  "keywords": [
+    "lifelogging",
+    "life",
+    "management",
+    "platform",
+    "dashboard"
+  ],
+  "bugs": {
+    "url": "https://github.com/correl8/me/issues"
+  },
+  "homepage": "https://correl8.me/"
+}
