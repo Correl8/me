@@ -1,12 +1,11 @@
 {
   "name": "correl8",
-  "version": "0.0.1",
-  "description": "Test",
+  "version": "0.0.2",
+  "description": "Correl8.me API for storing and retrieving time based data",
   "main": "app.js",
   "dependencies": {
     "elasticsearch": "^8.2.0",
-    "express": "^4.10.6",
-    "redis": "^0.12.1"
+    "express": "^4.10.6"
   },
   "devDependencies": {},
   "scripts": {
