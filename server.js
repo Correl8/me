@@ -6,7 +6,15 @@ var client = new elasticsearch.Client({
 });
 var INDEX_NAME = 'correl8';
 
+// set range for numeric timestamp guessing
+var SECONDS_PAST = 60 * 60 * 24 * 365 * 10; // about 10 years in the past
+var SECONDS_FUTURE = 60 * 60 * 24; // 24 hours in the future
+
 var app = express();
+
+app.get('/favicon.ico/', function (req, res) {
+  res.send();
+});
 
 app.get('/:sensor/', function (req, res) {
   console.log('in query...');
@@ -68,14 +76,25 @@ app.post('/:sensor/init', function (req, res) {
 
 
 function init(sensor, object, res) {
-  var properties = {timestamp: {type: date, format: 'strict_date_optional_time||epoch_millis'}};
+  var properties = {timestamp: {type: 'date', format: 'strict_date_optional_time||epoch_millis'}};
   for (var prop in object) {
-    properties[prop] = {type: object[prop]};
+    // doc_values: store values to disk (reduce heap size)
+    properties[prop] = {type: object[prop], doc_values: true};
+    // use propietary "text" type for analyzed strings
+    if (object[prop] === 'text') {
+      properties[prop].type = 'string';
+      // doc_values do not currently work with analyzed string fields
+      properties[prop].doc_values = false;
+    }
+    // other strings are not analyzed
+    else if (object[prop] === 'string') {
+      properties[prop].index = 'not_analyzed';
+    }
   }
   var mappings = {};
   mappings[sensor] = {properties: properties};
   client.index({
-    index: INDEX_NAME,
+    index: INDEX_NAME + '-' + sensor,
     type: sensor,
     body: {}
   }, function (error, response) {
@@ -84,7 +103,7 @@ function init(sensor, object, res) {
       return;
     }
     client.indices.putMapping({
-      index: INDEX_NAME,
+      index: INDEX_NAME + '-' + sensor,
       type: sensor,
       body: {properties: properties}
     }, function (error, response) {
@@ -100,15 +119,28 @@ function init(sensor, object, res) {
 
 function insert(sensor, object, res) {
   var ts = new Date();
-  if (object && object.timestamp && Date.parse(object.timestamp)) {
-    ts = new Date(object.timestamp);
+  if (object && object.timestamp) {
+    // timestamp is a string that can be parsed by Date.parse
+    if (!isNaN(Date.parse(object.timestamp))) {
+      ts = new Date(object.timestamp);
+    }
+    // timestamp is milliseconds within valid range
+    else if ((object.timestamp >= (ts.getTime() - SECONDS_PAST * 1000)) &&
+             (object.timestamp <= (ts.getTime() - SECONDS_FUTURE * 1000))) {
+      ts.setTime(object.timestamp);
+    }
+    // timestamp is seconds within valid range
+    else if ((object.timestamp >= (ts.getTime() / 1000 - SECONDS_PAST)) &&
+             (object.timestamp <= (ts.getTime() / 1000 - SECONDS_FUTURE))) {
+      ts.setTime(object.timestamp * 1000);
+    }
   }
+  object.timestamp = ts;
 
   client.index(
     {
-      index: INDEX_NAME,
+      index: INDEX_NAME + '-' + sensor,
       type: sensor,
-      timestamp: ts, // .toISOString()
       body: object
     },
     function (error, response) {
@@ -125,7 +157,7 @@ function insert(sensor, object, res) {
 function query(sensor, params, res) {
   client.index(
     {
-      index: INDEX_NAME,
+      index: INDEX_NAME + '-' + sensor,
       type: sensor,
       body: params
     },
