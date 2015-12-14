@@ -1,5 +1,6 @@
 var express = require('express');
 var elasticsearch = require('elasticsearch');
+var bodyParser = require('body-parser');
 var client = new elasticsearch.Client({
   host: 'localhost:9200',
   log: 'trace'
@@ -11,7 +12,7 @@ var SECONDS_PAST = 60 * 60 * 24 * 365 * 10; // about 10 years in the past
 var SECONDS_FUTURE = 60 * 60 * 24; // 24 hours in the future
 
 var app = express();
-
+app.use(bodyParser.json());
 app.get('/favicon.ico/', function (req, res) {
   res.send();
 });
@@ -33,7 +34,7 @@ app.post('/:sensor/', function (req, res) {
   var sensor = req.params.sensor;
   var object = req.query;
   for (var prop in req.body) {
-    object.prop = req.body.prop;
+    object[prop] = req.body[prop];
   }
   insert(sensor, object, res);
 });
@@ -42,7 +43,7 @@ app.put('/:sensor/', function (req, res) {
   var sensor = req.params.sensor;
   var object = req.query;
   for (var prop in req.body) {
-    object.prop = req.body.prop;
+    object[prop] = req.body[prop];
   }
   insert(sensor, object, res);
 });
@@ -57,7 +58,7 @@ app.put('/:sensor/init', function (req, res) {
   var sensor = req.params.sensor;
   var object = req.query;
   for (var prop in req.body) {
-    object.prop = req.body.prop;
+    object[prop] = req.body[prop];
   }
   init(sensor, object, res);
 });
@@ -66,7 +67,7 @@ app.post('/:sensor/init', function (req, res) {
   var sensor = req.params.sensor;
   var object = req.query;
   for (var prop in req.body) {
-    object.prop = req.body.prop;
+    object[prop] = req.body[prop];
   }
   init(sensor, object, res);
 });
@@ -151,48 +152,58 @@ function insert(sensor, object, res) {
 
   var indexName = INDEX_NAME + '-' + sensor.toLowerCase();
   var monthIndex = indexName + '-' + ts.getFullYear() + '-' + (ts.getMonth()+1);
-  client.index(
-    {
-      // optimistic, assumes monthIndex esists...
-      index: monthIndex,
-      type: sensor,
-      body: object
-    },
-    function (error, response) {
-      if (error) {
-        // welcome to the callback hell
-        if (!client.indices.exists({index: monthIndex}) &&
-            !client.indices.exists({index: indexName})) {
-          res.json({error: true, message: 'Index for sensor ' + sensor + ' not initialized!'})
+  client.indices.exists({index: indexName}).then(function(response) {
+    return client.index(
+      {
+        // optimistic, assumes monthIndex esists...
+        index: indexName,
+        type: sensor,
+        body: object
+      }
+    );
+  }).then(function(response) {
+    client.indices.exists({index: monthIndex}).then(function(response) {
+      return client.index(
+        {
+          // optimistic, assumes monthIndex esists...
+          index: monthIndex,
+          type: sensor,
+          body: object
         }
-        else if (!client.indices.exists({index: monthIndex}) &&
-                 client.indices.exists({index: indexName})) {
-          client.indices.getMapping({index: indexName},
-          function (error, result) {
-            if (error) {
-              console.warn(error);
-              res.json(error);
-              return;
-            }
-            // override res.json for index init
-            var fakeRes = function() {
-              var json = function(data) {
-                insert(sensor, obj, res); // recursion!!!
-              }
-            }
-            init(sensor, result, fakeRes);
-          });
-        }
-        else {
+      );
+    });
+  }).then(function(response) {
+    console.log(response);
+    res.json(response);
+  }).catch(function(error) {
+    if (!client.indices.exists({index: monthIndex}) &&
+        !client.indices.exists({index: indexName})) {
+      res.json({error: true, message: 'Index for sensor ' + sensor + ' not initialized!'})
+    }
+    else if (!client.indices.exists({index: monthIndex}) &&
+             client.indices.exists({index: indexName})) {
+      client.indices.getMapping({index: indexName},
+      function (error, result) {
+        if (error) {
           console.warn(error);
           res.json(error);
           return;
         }
-      }
-      console.log(response);
-      res.json(response);
+        // override res.json for index init
+        var fakeRes = function() {
+          var json = function(data) {
+            insert(sensor, obj, res); // recursion!!!
+          }
+        }
+        init(sensor, result, fakeRes);
+      });
     }
-  );
+    else {
+      console.warn(error);
+      res.json(error);
+      return;
+    }
+  });
 }
 
 function query(sensor, params, res) {
@@ -215,31 +226,31 @@ function query(sensor, params, res) {
 }
 
 function queryToObject(query) {
-  console.log(query);
+  // console.log(query);
   var object = {};
   for (var prop in query) {
     // nested object can be specified in GET urls like
     if (prop.indexOf('.') > 0) {
       var parts = prop.split('.');
-      console.log(parts);
+      // console.log(parts);
       var parent = object;
       for (var i=0; i<parts.length-1; i++) {
         if (!parent[parts[i]]) {
           parent[parts[i]] = {};
-          console.log(parts[i] + ': ' + typeof(parent[parts[i]]) + ' (' + parts[i-1] + ')');
+          // console.log(parts[i] + ': ' + typeof(parent[parts[i]]) + ' (' + parts[i-1] + ')');
         }
         parent = parent[parts[i]];
-        console.log(object);
+        // console.log(object);
       }
       // var parent = (parts.length < 2) ? object : object[parts[parts.length-2]];
       parent[parts[parts.length-1]] = query[prop];
-      console.log(parts[parts.length-1] + ': ' + typeof(parent[parts[parts.length-1]]));
+      // console.log(parts[parts.length-1] + ': ' + typeof(parent[parts[parts.length-1]]));
     }
     else {
       object[prop] = query[prop];
     }
   }
-  console.log('Turned ' + JSON.stringify(query) + ' into ' + JSON.stringify(object));
+  // console.log('Turned ' + JSON.stringify(query) + ' into ' + JSON.stringify(object));
   return(object);
 }
 

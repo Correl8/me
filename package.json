@@ -4,6 +4,7 @@
   "description": "Correl8.me API for storing and retrieving time based data",
   "main": "app.js",
   "dependencies": {
+    "body-parser": "^1.14.1",
     "elasticsearch": "^8.2.0",
     "express": "^4.10.6"
   },
