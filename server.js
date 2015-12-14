@@ -87,7 +87,7 @@ function init(sensor, object, res) {
   properties.timestamp = {type: 'date', format: 'strict_date_optional_time||epoch_millis'};
   mappings[sensor] = {properties: properties};
   client.index({
-    index: INDEX_NAME + '-' + sensor,
+    index: INDEX_NAME + '-' + sensor.toLowerCase(),
     type: sensor,
     body: {}
   }, function (error, response) {
@@ -97,7 +97,7 @@ function init(sensor, object, res) {
       return;
     }
     client.indices.putMapping({
-      index: INDEX_NAME + '-' + sensor,
+      index: INDEX_NAME + '-' + sensor.toLowerCase(),
       type: sensor,
       body: {properties: properties}
     }, function (error, response) {
@@ -115,7 +115,7 @@ function init(sensor, object, res) {
 function deleteIndex(sensor, res) {
   client.indices.delete(
     {
-      index: INDEX_NAME + '-' + sensor + '*'
+      index: INDEX_NAME + '-' + sensor.toLowerCase() + '*'
     },
     function (error, response) {
       if (error) {
@@ -149,7 +149,7 @@ function insert(sensor, object, res) {
   }
   object.timestamp = ts;
 
-  var indexName = INDEX_NAME + '-' + sensor;
+  var indexName = INDEX_NAME + '-' + sensor.toLowerCase();
   var monthIndex = indexName + '-' + ts.getFullYear() + '-' + (ts.getMonth()+1);
   client.index(
     {
@@ -198,7 +198,7 @@ function insert(sensor, object, res) {
 function query(sensor, params, res) {
   client.index(
     {
-      index: INDEX_NAME + '-' + sensor,
+      index: INDEX_NAME + '-' + sensor.toLowerCase(),
       type: sensor,
       body: params
     },
