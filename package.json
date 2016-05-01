@@ -1,6 +1,6 @@
 {
   "name": "correl8-api",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Correl8.me API for storing and retrieving time based data",
   "main": "app.js",
   "dependencies": {
