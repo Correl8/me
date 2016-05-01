@@ -1,17 +1,24 @@
 {
-  "name": "correl8",
-  "version": "0.0.2",
+  "name": "correl8-api",
+  "version": "0.0.3",
   "description": "Correl8.me API for storing and retrieving time based data",
   "main": "app.js",
   "dependencies": {
     "body-parser": "^1.14.1",
-    "elasticsearch": "^8.2.0",
-    "express": "^4.10.6"
+    "correl8": "^0.0.6",
+    "express": "^4.10.6",
+    "humanized-api": "0.0.1"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "mocha": "^2.2.4",
+    "require-self": "^0.1.0",
+    "supertest": "^1.2.0",
+    "supertest-as-promised": "^3.1.0"
+  },
   "scripts": {
     "start": "node --harmony server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "./node_modules/mocha/bin/mocha"
   },
   "author": "Samuel Rinnetmäki",
   "license": "ISC",
