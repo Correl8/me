@@ -1,20 +1,20 @@
 {
   "name": "correl8-api",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Correl8.me API for storing and retrieving time based data",
-  "main": "app.js",
+  "main": "server.js",
   "dependencies": {
-    "body-parser": "^1.14.1",
-    "correl8": "^0.0.6",
-    "express": "^4.10.6",
-    "humanized-api": "0.0.1"
+    "body-parser": "latest",
+    "correl8": "latest",
+    "express": "latest",
+    "humanized-api": "latest"
   },
   "devDependencies": {
-    "chai": "^3.5.0",
-    "mocha": "^2.2.4",
-    "require-self": "^0.1.0",
-    "supertest": "^1.2.0",
-    "supertest-as-promised": "^3.1.0"
+    "chai": "latest",
+    "mocha": "^3.5.0",
+    "require-self": "^0.2.1",
+    "supertest": "^3.0.0",
+    "supertest-as-promised": "^4.0.2"
   },
   "scripts": {
     "start": "node --harmony server.js",
