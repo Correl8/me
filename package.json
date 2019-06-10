@@ -4,17 +4,17 @@
   "description": "Correl8.me API for storing and retrieving time based data",
   "main": "server.js",
   "dependencies": {
-    "body-parser": "latest",
-    "correl8": "latest",
-    "express": "latest",
+    "body-parser": "^1.19.0",
+    "correl8": "^0.5.0",
+    "express": "^4.17.1",
     "humanized-api": "latest"
   },
   "devDependencies": {
-    "chai": "latest",
-    "mocha": "^3.5.0",
-    "require-self": "^0.2.1",
-    "supertest": "^3.0.0",
-    "supertest-as-promised": "^4.0.2"
+    "chai": "^4.2.0",
+    "mocha": "latest",
+    "require-self": "latest",
+    "supertest": "latest",
+    "supertest-as-promised": "latest"
   },
   "scripts": {
     "start": "node --harmony server.js",
