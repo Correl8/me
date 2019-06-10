@@ -1,10 +1,11 @@
-var express = require('express');
-var hapi = require('humanized-api');
-var bodyParser = require('body-parser');
-var correl8 = require('correl8');
+const express = require('express');
+const hapi = require('humanized-api');
+const bodyParser = require('body-parser');
+const correl8 = require('correl8');
+const config = require('./config.js');
 
-var app = express();
-var jsonParser = bodyParser.json()
+const app = express();
+const jsonParser = bodyParser.json()
 
 app.use(hapi.middleware());
 
@@ -13,19 +14,19 @@ app.get('/favicon.ico/', function (req, res) {
 });
 
 app.get('/:sensor/', function (req, res) {
-  var sensor = req.params.sensor;
+  let sensor = req.params.sensor;
   query(sensor, req.query, res);
 });
 
 app.get('/:sensor/insert', function (req, res) {
-  var sensor = req.params.sensor;
-  var object = req.query;
+  let sensor = req.params.sensor;
+  let object = req.query;
   insert(sensor, object, res);
 });
 
 app.post('/:sensor/', jsonParser, function (req, res) {
-  var sensor = req.params.sensor;
-  var object = req.query;
+  let sensor = req.params.sensor;
+  let object = req.query;
   for (var prop in req.body) {
     object[prop] = req.body[prop];
   }
@@ -33,8 +34,8 @@ app.post('/:sensor/', jsonParser, function (req, res) {
 });
 
 app.put('/:sensor/', jsonParser, function (req, res) {
-  var sensor = req.params.sensor;
-  var object = req.query;
+  let sensor = req.params.sensor;
+  let object = req.query;
   for (var prop in req.body) {
     object[prop] = req.body[prop];
   }
@@ -42,14 +43,14 @@ app.put('/:sensor/', jsonParser, function (req, res) {
 });
 
 app.get('/:sensor/init', function (req, res) {
-  var sensor = req.params.sensor;
-  var object = queryToObject(req.query);
+  let sensor = req.params.sensor;
+  let object = queryToObject(req.query);
   init(sensor, object, res);
 });
 
 app.put('/:sensor/init', jsonParser, function (req, res) {
-  var sensor = req.params.sensor;
-  var object = req.query;
+  let sensor = req.params.sensor;
+  let object = req.query;
   for (var prop in req.body) {
     object[prop] = req.body[prop];
   }
@@ -57,8 +58,8 @@ app.put('/:sensor/init', jsonParser, function (req, res) {
 });
 
 app.post('/:sensor/init', jsonParser, function (req, res) {
-  var sensor = req.params.sensor;
-  var object = req.query;
+  let sensor = req.params.sensor;
+  let object = req.query;
   for (var prop in req.body) {
     object[prop] = req.body[prop];
   }
@@ -66,28 +67,28 @@ app.post('/:sensor/init', jsonParser, function (req, res) {
 });
 
 app.delete('/:sensor/', function (req, res) {
-  var sensor = req.params.sensor;
+  let sensor = req.params.sensor;
   deleteIndex(sensor, res);
 });
 
 app.all('/:sensor/clear', function (req, res) {
-  var sensor = req.params.sensor;
+  let sensor = req.params.sensor;
   clear(sensor, res);
 });
 
 app.all('/:sensor/delete/:id', function (req, res) {
-  var sensor = req.params.sensor;
-  var id = req.params.id;
+  let sensor = req.params.sensor;
+  let id = req.params.id;
   deleteOne(sensor, id, res);
 });
 
 app.all('/:sensor/remove', function (req, res) {
-  var sensor = req.params.sensor;
+  let sensor = req.params.sensor;
   remove(sensor, res);
 });
 
 function init(sensor, object, res) {
-  var c8 = correl8(sensor);
+  let c8 = new correl8(sensor, config.basename, config.elasticOpts);
   c8.init(object).then(function (results) {
     res.sendHAPISuccess(hapi.HAPI_VERB.create, sensor, results);
   }).catch(function(error) {
@@ -96,7 +97,7 @@ function init(sensor, object, res) {
 }
 
 function remove(sensor, res) {
-  var c8 = correl8(sensor);
+  let c8 = new correl8(sensor, config.basename, config.elasticOpts);
   // console.log('Removing index ' + sensor);
   c8.remove().then(function (results) {
     console.log(results);
@@ -108,7 +109,7 @@ function remove(sensor, res) {
 }
 
 function deleteOne(sensor, id, res) {
-  var c8 = correl8(sensor);
+  let c8 = new correl8(sensor, config.basename, config.elasticOpts);
   // console.log('Deleting document ' + id);
   c8.deleteOne(id).then(function (results) {
     console.log(results);
@@ -120,7 +121,7 @@ function deleteOne(sensor, id, res) {
 }
 
 function clear(sensor, res) {
-  var c8 = correl8(sensor);
+  let c8 = new correl8(sensor, config.basename, config.elasticOpts);
   c8.clear().then(function (results) {
     res.sendHAPISuccess(hapi.HAPI_VERB.delete, sensor, results);
   }).catch(function(error) {
@@ -129,7 +130,7 @@ function clear(sensor, res) {
 }
 
 function insert(sensor, object, res) {
-  var c8 = correl8(sensor);
+  let c8 = new correl8(sensor, config.basename, config.elasticOpts);
   c8.insert(object).then(function (results) {
     // console.log(JSON.stringify(results, null, 2));
     res.sendHAPISuccess(hapi.HAPI_VERB.create, sensor, object);
@@ -139,7 +140,7 @@ function insert(sensor, object, res) {
 }
 
 function query(sensor, params, res) {
-  var c8 = correl8(sensor);
+  let c8 = new correl8(sensor, config.basename, config.elasticOpts);
   c8.search(params).then(function (results) {
     res.sendHAPISuccess(hapi.HAPI_VERB.get, sensor, results);
   }).catch(function(error) {
@@ -149,24 +150,24 @@ function query(sensor, params, res) {
 
 function queryToObject(query) {
   // console.log(query);
-  var object = {};
+  let object = {};
   for (var prop in query) {
     // nested object can be specified in GET urls like
     if (prop.indexOf('.') > 0) {
-      var parts = prop.split('.');
+      let parts = prop.split('.');
       // console.log(parts);
-      var parent = object;
+      let parent = object;
       for (var i=0; i<parts.length-1; i++) {
         if (!parent[parts[i]]) {
           parent[parts[i]] = {};
-          console.log(parts[i] + ': ' + typeof(parent[parts[i]]) + ' (' + parts[i-1] + ')');
+          // console.log(parts[i] + ': ' + typeof(parent[parts[i]]) + ' (' + parts[i-1] + ')');
         }
         parent = parent[parts[i]];
-        console.log(object);
+        // console.log(object);
       }
-      // var parent = (parts.length < 2) ? object : object[parts[parts.length-2]];
+      // let parent = (parts.length < 2) ? object : object[parts[parts.length-2]];
       parent[parts[parts.length-1]] = query[prop];
-      console.log(parts[parts.length-1] + ': ' + typeof(parent[parts[parts.length-1]]));
+      // console.log(parts[parts.length-1] + ': ' + typeof(parent[parts[parts.length-1]]));
     }
     else {
       object[prop] = query[prop];
@@ -176,9 +177,9 @@ function queryToObject(query) {
   return(object);
 }
 
-var server = app.listen(3000, function () {
-  var host = server.address().address;
-  var port = server.address().port;
+let server = app.listen(3000, function () {
+  let host = server.address().address;
+  let port = server.address().port;
   if (!host || (host === '::')) {
     host = 'localhost';
   }
